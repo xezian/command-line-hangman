@@ -1,0 +1,1 @@
+const Letter = require("./letter.js").Letter;
