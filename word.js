@@ -22,4 +22,12 @@ Word.prototype.displayWord = function() {
         this.wordDisplay.push(this.actualLetters[i].showThis);
     }
 }
+Word.prototype.check = function() {
+    guessedWord = this.wordDisplay.join("");
+    actualWord = this.word;
+    if (guessedWord === actualWord) {
+        console.log("Great going!")
+        return true;
+    }
+};
 module.exports.Word = Word;

@@ -1,9 +1,12 @@
+// require user.js
+const User = require("./user.js").User;
 // require word.js
 const Word = require("./word.js").Word;
 // require inquirer.js
 const inquirer = require("inquirer");
 // mysteryWord
 let mysteryWord = "";
+let theUser;
 // let the inquiries begin:
 initGame();
 function initGame() {
@@ -13,9 +16,21 @@ function initGame() {
             name: "wantsToPlay",
             message: "Oh hi! Would you like to play some Hangman?",
             default: true
-        }
-    ]).then(function(answer){
-        if (answer.wantsToPlay) {
+        },
+        {
+            when: function(answers) {
+                return answers.wantsToPlay;
+            },
+            type: "name",
+            name: "userName",
+            message: "What is your user name?"
+        }, 
+    ]).then(function(answers){
+        if (answers.wantsToPlay) {
+            let userName = answers.userName;
+            let password = "password";
+            theUser = new User(userName, password);
+            console.log(theUser);
             playHangman();
         } else {
             console.log("Oh well, maybe some other time then");
@@ -36,6 +51,11 @@ function showTheQuestion() {
     // allow a representation of the word to exist by means of dot join
     let seeTheWord = mysteryWord.wordDisplay.join(" ");
     console.log(seeTheWord);
+    if (mysteryWord.check()) {
+        console.log("You got it!")
+        initGame();
+        return;
+    };
     // inquirer wants you to pick a letter
     inquirer.prompt([
         {
