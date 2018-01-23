@@ -5,7 +5,7 @@ const Letter = function(letter) {
     this.showThis = "_";
 };
 // this is where we add the methods to the prototype on the constructor function
-Letter.prototype.guessThis = function() {
+Letter.prototype.guessCorrectly = function() {
     this.isGuessed = true;
     this.showThis = this.letter;
 };

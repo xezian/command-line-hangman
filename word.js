@@ -7,19 +7,19 @@ const Word = function() {
     // what's the word
     this.word = randomWord();
     // array to contain each letter of the word
-    this.letters = [];
+    this.actualLetters = [];
     this.wordDisplay = [];
 };
 Word.prototype.letterize = function() {
     for (let i = 0; i < this.word.length; i++) {
         let newLetter = new Letter(this.word[i]);
-        this.letters.push(newLetter);
+        this.actualLetters.push(newLetter);
     }
 };
 Word.prototype.displayWord = function() {
     this.wordDisplay = [];
-    for (let i = 0; i < this.letters.length; i++) {
-        this.wordDisplay.push(this.letters[i].showThis);
+    for (let i = 0; i < this.actualLetters.length; i++) {
+        this.wordDisplay.push(this.actualLetters[i].showThis);
     }
 }
 module.exports.Word = Word;
