@@ -10,4 +10,4 @@ Letter.prototype.guessCorrectly = function() {
     this.showThis = this.letter;
 };
 // now export the constructor so it can be used elsewhere
-module.exports.Letter = Letter;
+module.exports = Letter;

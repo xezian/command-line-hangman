@@ -1,15 +1,16 @@
-const User = function(username, password) {
+const fs = require("fs");
+const Word = require("./word.js");
+let User = function(username) {
     this.name = username;
-    this.password = password;
     this.guesses = 10;
     this.points = 0;
     this.lookups = 5;
 };
-User.prototype.guessRight = (word) => {
+User.prototype.guessRight = function(word) {
     let newPoints = this.guesses + word.word.length;
     this.points = this.points + newPoints;
 };
-User.prototype.failToGuess = (word) => {
+User.prototype.failToGuess = function(word) {
     let lettersUnguessed = 0;
     for (let i = 0; i < word.wordDisplay.length; i++) {
         if (word.wordDisplay[i] === "_") {
@@ -18,4 +19,11 @@ User.prototype.failToGuess = (word) => {
     };
     this.points = this.points - lettersUnguessed;
 };
-module.exports.User = User;
+User.prototype.storeUser = function() {
+    fs.appendFile("users.json", JSON.stringify(this, null, 2), function(err){
+        if (err) throw err;
+        console.log(`Your "object" was successfully appended!`);
+    });
+};
+
+module.exports = User;

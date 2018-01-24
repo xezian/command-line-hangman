@@ -1,7 +1,7 @@
 // require user.js
-const User = require("./user.js").User;
+const User = require("./user.js");
 // require word.js
-const Word = require("./word.js").Word;
+const Word = require("./word.js");
 // require inquirer.js
 const inquirer = require("inquirer");
 // mysteryWord
@@ -24,12 +24,18 @@ function initGame() {
             type: "name",
             name: "userName",
             message: "What is your user name?"
-        }, 
+        },
+        {
+            when: function(answers) {
+                let uName = answers.userName;
+                
+                return 
+            }
+        } 
     ]).then(function(answers){
         if (answers.wantsToPlay) {
             let userName = answers.userName;
-            let password = "password";
-            theUser = new User(userName, password);
+            theUser = new User(userName);
             console.log(theUser);
             playHangman();
         } else {
@@ -40,22 +46,23 @@ function initGame() {
 function playHangman() {
     // get a new word using the word constructor (which in turn uses the letter constructor)
     mysteryWord = new Word();
-    // get letters from within a new random word and pushes them to an array of objects called actualLetters
-    mysteryWord.letterize();
     // showTheQuestion asks for the current word state what letter do ya wanna pick
     showTheQuestion();
 };
 function showTheQuestion() {
-    // display every letter of the word's property called showThis which is either an underscore or the letter depending if the function guessCorrectly has been run or not
-    mysteryWord.displayWord();
+    // update the word
+    mysteryWord.updateWord();
     // allow a representation of the word to exist by means of dot join
     let seeTheWord = mysteryWord.wordDisplay.join(" ");
     console.log(seeTheWord);
-    if (mysteryWord.check()) {
+    if (mysteryWord.isItTrue) {
         console.log("You got it!")
         initGame();
         return;
     };
+
+    // TODO check for remaining number of guesses
+
     // inquirer wants you to pick a letter
     inquirer.prompt([
         {
@@ -82,5 +89,8 @@ function selectLetter(letter) {
         console.log("nope")
     }
     showTheQuestion();
+
+    // TODO decrease guesses
+
 };
 
