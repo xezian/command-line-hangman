@@ -1,3 +1,4 @@
+const fs = require("fs");
 // require user.js
 const User = require("./user.js");
 // require word.js
@@ -7,15 +8,36 @@ const inquirer = require("inquirer");
 // mysteryWord
 let mysteryWord = "";
 let theUser;
-// let the inquiries begin:
-initGame();
+let userObj = [];
+function fillUpUserObj() {
+    fs.readFile('users.json', function (err, data) {
+        if (!err) {
+            try {
+                userObj = JSON.parse(data);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    });
+};
+function retrieveUser(username) {
+    for (let key = 0; key < userObj.length; key++) {
+        let nameInObj = userObj[key].name;
+        if (nameInObj === username) {
+            return userObj[key];
+        } 
+    }
+    return "no such user";
+};
 function initGame() {
+    fillUpUserObj();
+    theUser = new User("default");
     inquirer.prompt([
         {
             type: "confirm",
             name: "wantsToPlay",
             message: "Oh hi! Would you like to play some Hangman?",
-            default: true
+            default: true,
         },
         {
             when: function(answers) {
@@ -26,17 +48,35 @@ function initGame() {
             message: "What is your user name?"
         },
         {
+            name: "user_exists",
+            // checks to see if user already exists
             when: function(answers) {
-                let uName = answers.userName;
-                
-                return 
-            }
-        } 
+                for (let key = 0; key < userObj.length; key++) {
+                    let nameInObj = userObj[key].name;
+                    let nameRequested = answers.userName;
+                    if (nameInObj == nameRequested) {
+                        return true;
+                    } 
+                }
+                return false;
+            },
+            type: "confirm",
+            message: "Want to pull up the stats for that user?"
+        }
     ]).then(function(answers){
+        theUser.name = answers.userName;
         if (answers.wantsToPlay) {
-            let userName = answers.userName;
-            theUser = new User(userName);
-            console.log(theUser);
+            if (answers.user_exists) {
+                console.log("existing user: " + theUser);
+                let userRecord = retrieveUser(theUser.name);
+                theUser.points = userRecord.points;
+                theUser.lookups = userRecord.lookups;
+                theUser.favoriteWords = userRecord.favoriteWords;
+                theUser.storeUser();
+            } else {
+                console.log("new user: " + theUser);
+                theUser.storeUser();
+            }
             playHangman();
         } else {
             console.log("Oh well, maybe some other time then");
@@ -46,23 +86,71 @@ function initGame() {
 function playHangman() {
     // get a new word using the word constructor (which in turn uses the letter constructor)
     mysteryWord = new Word();
+    // reset user guesses 
+    theUser.guesses = 17;
     // showTheQuestion asks for the current word state what letter do ya wanna pick
     showTheQuestion();
 };
+function startAgain() {
+    inquirer.prompt([
+        {
+            name:"startAgain",
+            message:"start over?",
+            type: "confirm",
+            default: true,
+        }
+    ]).then(function(answer){
+        if(answer.startAgain) {
+            playHangman();
+        } else {
+            console.log("k, bye");
+            process.exit();
+        }
+    })
+};
+function storeWord() {
+    inquirer.prompt([
+        {
+            name:"storeWord",
+            type: "confirm",
+            message:"do you want to save this on your profile with your favorite words?",
+            default: false,
+        }
+    ]).then(function(answer){
+        if(answer.storeWord) {
+            theUser.favoriteWords.push(mysteryWord.word);
+            theUser.storeUser();
+        } else {
+            console.log("alrighty");
+        }
+        startAgain();
+    })
+}
 function showTheQuestion() {
     // update the word
     mysteryWord.updateWord();
     // allow a representation of the word to exist by means of dot join
     let seeTheWord = mysteryWord.wordDisplay.join(" ");
     console.log(seeTheWord);
+    // check if whole word is guessed
     if (mysteryWord.isItTrue) {
-        console.log("You got it!")
-        initGame();
+        console.log("You got it!");
+        theUser.guessRight(mysteryWord);
+        theUser.storeUser();
+        storeWord();
         return;
     };
-
-    // TODO check for remaining number of guesses
-
+    if (theUser.guesses > 0) {
+        inviteGuess();
+    } else if (theUser.guesses <= 0) {
+        console.log("boohoo! guess you just haven't got what it takes to guess this one word :(");
+        theUser.failToGuess(mysteryWord);
+        console.log("here's the word you failed to guess: " + mysteryWord.word);
+        theUser.storeUser();
+        storeWord();
+    };
+};
+function inviteGuess() {
     // inquirer wants you to pick a letter
     inquirer.prompt([
         {
@@ -70,11 +158,18 @@ function showTheQuestion() {
             message: "Feel free to guess a letter"
         }
     ]).then(function(answer) {
-        selectLetter(answer.user_guess);
+        if(mysteryWord.lettersGuessed.includes(answer.user_guess)) {
+            console.log("you've already guessed that letter!");
+            inviteGuess();
+        } else {
+            selectLetter(answer.user_guess);
+            theUser.guesses--;
+        }
     })
 };
 // function to process the selection of a letter
 function selectLetter(letter) {
+    mysteryWord.lettersGuessed.push(letter);
     let theWord = mysteryWord.word;
     let theLetters = mysteryWord.actualLetters;
     if (theWord.includes(letter)) {
@@ -88,9 +183,9 @@ function selectLetter(letter) {
     } else {
         console.log("nope")
     }
+    console.log("guesses remaining: " + theUser.guesses);
     showTheQuestion();
-
-    // TODO decrease guesses
-
 };
-
+module.exports = {
+    initGame: initGame,
+};
