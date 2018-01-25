@@ -9,6 +9,9 @@ const inquirer = require("inquirer");
 let mysteryWord = "";
 let theUser;
 let userObj = [];
+function isAlphabetCharacter(letter) {
+    return (letter.length === 1) && /[a-z]/i.test(letter);
+};
 function fillUpUserObj() {
     fs.readFile('users.json', function (err, data) {
         if (!err) {
@@ -60,21 +63,32 @@ function initGame() {
                 }
                 return false;
             },
-            type: "confirm",
-            message: "Want to pull up the stats for that user?"
+            type: "list",
+            message: function(answers) {
+                return `would you to play as existing user: ${answers.userName}?`;
+            },
+            choices:["yes","no"]
         }
     ]).then(function(answers){
         theUser.name = answers.userName;
         if (answers.wantsToPlay) {
-            if (answers.user_exists) {
-                console.log("existing user: " + theUser);
+            // for if you are a user already and say yes
+            if (answers.user_exists === "yes") {
+                console.log("hello, existing user: " + answers.userName);
                 let userRecord = retrieveUser(theUser.name);
                 theUser.points = userRecord.points;
                 theUser.lookups = userRecord.lookups;
                 theUser.favoriteWords = userRecord.favoriteWords;
                 theUser.storeUser();
+                console.log(`here's your stats:`);
+                console.log(`points: ${theUser.points}\nfavorite words: ${theUser.favoriteWords.join(", ")}`);
+            // for if you are a user already and say no
+            } else if (answers.user_exists === "no") {
+                initGame();
+                return;
+            // for if neither choice is made (question not asked)
             } else {
-                console.log("new user: " + theUser);
+                console.log("hello, new user " + answers.userName);
                 theUser.storeUser();
             }
             playHangman();
@@ -158,12 +172,15 @@ function inviteGuess() {
             message: "Feel free to guess a letter"
         }
     ]).then(function(answer) {
-        if(mysteryWord.lettersGuessed.includes(answer.user_guess)) {
+        if (mysteryWord.lettersGuessed.includes(answer.user_guess)) {
             console.log("you've already guessed that letter!");
-            inviteGuess();
-        } else {
+            showTheQuestion();
+        } else if (isAlphabetCharacter(answer.user_guess)) {
             selectLetter(answer.user_guess);
             theUser.guesses--;
+        } else {
+            console.log(`looks like you are guessing at some kinda non-letter! try again`);
+            showTheQuestion();
         }
     })
 };
