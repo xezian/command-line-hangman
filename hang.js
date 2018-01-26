@@ -9,9 +9,11 @@ const inquirer = require("inquirer");
 let mysteryWord = "";
 let theUser;
 let userObj = [];
+// function to check if letter is an alphabet character (also literally the only 3 lines of code I copied over from the previous hangman exercise)
 function isAlphabetCharacter(letter) {
     return (letter.length === 1) && /[a-z]/i.test(letter);
 };
+// this just reads and stores the file 'users.json' on initGame
 function fillUpUserObj() {
     fs.readFile('users.json', function (err, data) {
         if (!err) {
@@ -23,6 +25,7 @@ function fillUpUserObj() {
         }
     });
 };
+// function to retrieve a single user as an object from the userObj
 function retrieveUser(username) {
     for (let key = 0; key < userObj.length; key++) {
         let nameInObj = userObj[key].name;
@@ -32,6 +35,7 @@ function retrieveUser(username) {
     }
     return "no such user";
 };
+// starts the inquirer chain to set up a user
 function initGame() {
     fillUpUserObj();
     theUser = new User("default");
@@ -43,15 +47,15 @@ function initGame() {
             default: true,
         },
         {
+            // if user said yes
             when: function(answers) {
                 return answers.wantsToPlay;
             },
-            type: "name",
             name: "userName",
+            type: "name",
             message: "What is your user name?"
         },
         {
-            name: "user_exists",
             // checks to see if user already exists
             when: function(answers) {
                 for (let key = 0; key < userObj.length; key++) {
@@ -63,6 +67,7 @@ function initGame() {
                 }
                 return false;
             },
+            name: "user_exists",
             type: "list",
             message: function(answers) {
                 return `would you to play as existing user: ${answers.userName}?`;
@@ -76,6 +81,7 @@ function initGame() {
             if (answers.user_exists === "yes") {
                 console.log("hello, existing user: " + answers.userName);
                 let userRecord = retrieveUser(theUser.name);
+                // set all the important details to our current user object
                 theUser.points = userRecord.points;
                 theUser.lookups = userRecord.lookups;
                 theUser.favoriteWords = userRecord.favoriteWords;
@@ -105,6 +111,7 @@ function playHangman() {
     // showTheQuestion asks for the current word state what letter do ya wanna pick
     showTheQuestion();
 };
+// function to ask if you wanna start again
 function startAgain() {
     inquirer.prompt([
         {
@@ -137,9 +144,10 @@ function storeWord() {
         } else {
             console.log("alrighty");
         }
+        // call start again whether or not you wanted to store the word
         startAgain();
     })
-}
+};
 function showTheQuestion() {
     // update the word
     mysteryWord.updateWord();
@@ -151,16 +159,20 @@ function showTheQuestion() {
         console.log("You got it!");
         theUser.guessRight(mysteryWord);
         theUser.storeUser();
+        // ask if you wanna collect the word (then if you wanna start again)
         storeWord();
         return;
     };
+    // check guesses
     if (theUser.guesses > 0) {
         inviteGuess();
     } else if (theUser.guesses <= 0) {
         console.log("boohoo! guess you just haven't got what it takes to guess this one word :(");
         theUser.failToGuess(mysteryWord);
         console.log("here's the word you failed to guess: " + mysteryWord.word);
+        // update user info
         theUser.storeUser();
+        // ask if you wanna collect the word (then if you wanna start again)
         storeWord();
     };
 };
@@ -203,6 +215,7 @@ function selectLetter(letter) {
     console.log("guesses remaining: " + theUser.guesses);
     showTheQuestion();
 };
+// this is obviously unneccessary but I wanted to call hangman from inside a different document
 module.exports = {
     initGame: initGame,
 };

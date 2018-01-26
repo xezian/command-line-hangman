@@ -1,2 +1,3 @@
+// I thought I would be building some of the broader functionality into this document but it all kindof went into hang.js and now all this document does is call the initGame function inside hang.js. I'd like to try and reorganize some of the functions from hang.js into here but I didn't try yet for fear of breaking something that is working fine for now.
 const hang = require("./hang.js");
 hang.initGame();
